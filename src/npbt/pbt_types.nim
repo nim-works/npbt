@@ -222,11 +222,12 @@ proc generateAux[T](p: var Property[T], rng: Random,
     else:
       p.arb.withBias(runIdToFrequency(r)).generate(mrng)
 
-proc generate*[T](p: var Property[T], mrng: Random, runId: RunId): Shrinkable[T] =
-  return generateAux(p, mrng, runId)
+proc generate*[T](
+    p: var Property[T], mrng: Random, runId: RunId): Shrinkable[T] =
+  generateAux(p, mrng, runId)
 
 proc generate*[T](p: Property[T], mrng: Random): Shrinkable[T] =
-  return generateAux(p, mrng, noRunId)
+  generateAux(p, mrng, noRunId)
 
 proc shrink*[T](p: Property[T], value: Shrinkable[T]): seq[Shrinkable[T]] =
   p.arb.shrink(value)

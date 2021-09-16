@@ -7,6 +7,12 @@ from std/strutils import repeat
 import ./pbt_types
 
 type
+  CounterExample[T] = object
+    value*: T ## Value for which property predicate does not return
+              ## `ptPas`
+    path*: seq[int] ## DOC. Replace with int typedef, this is not
+                    ## descriptive enough
+
   RunExecution*[T] = object
     ## result of run execution
     # XXX: move to using this rather than open state in `execProperty` procs
@@ -16,7 +22,35 @@ type
     runId*: uint32
     failureOn*: PossibleRunId
     seed*: uint32
-    counterExample*: Option[T]
+    counterExample*: Option[CounterExample[T]]
+    hasFailure*: bool
+    currentValue: T ## Last yielded value. Is stored in runner instance in
+                    ## order to specify correct value for `CounterExample`
+
+    # REVIEW fields below were added "because fast-check" does this, they
+    # might not be actually needed later (see next comments).
+
+    message*: string # QUESTION fast-check stores execution failure
+                     # messages in the `RunExecution` objects, but we also
+                     # have `AssertReport` object. Should I reuse it
+                     # instead? I.e. remove all `failureOn`, `seed` and
+                     # other entries, and embed one object in another? This
+                     # is probably preferrable, though for now I will
+                     # follow fast-check approach.
+    numSuccess*: int
+
+  Runner[T] = object
+    ## Wrapper around run execution. Holds both value generator and
+    ## statistics about run execution.
+    # NOTE For now I mirror design of the fast-check, later it might be
+    # better to separate properties and source value generator.
+    runExecution: RunExecution[T] ## Current state of run execution
+    currentIdx: int ## Number of values checked by this runner
+    sourceValues: Arbitrary[T] ## Generator of the source values to check
+
+  RunnerYield[T] = object
+    value: Shrinkable[T]
+    done: bool
 
   GlobalContext* = object
     hasFailure*: bool
@@ -34,7 +68,7 @@ type
     firstFailure*: PossibleRunId
     failureType*: PTStatus
     seed*: uint32
-    counterExample*: Option[T]
+    counterExample*: Option[CounterExample[T]]
 
   AssertParams* = object
     ## parameters for asserting properties
@@ -56,7 +90,8 @@ proc recordFailure*[T](r: var AssertReport[T], example: T,
   assert ft in {ptFail, ptPreCondFail}, fmt"invalid failure status: {ft}"
   if r.firstFailure.isUnspecified():
     r.firstFailure = r.runId
-    r.counterExample = some(example)
+    r.counterExample = some(CounterExample[T](value: example))
+
   inc r.failures
   when defined(debug):
     let exampleStr = $example.get() # XXX: handle non-stringable stuff
@@ -86,7 +121,9 @@ proc startReport*[T](
   result = AssertReport[T](
     name: name, runId: noRunId,
     failures: 0, seed: seed,
-    firstFailure: noRunId, counterExample: none[T]())
+    firstFailure: noRunId,
+    counterExample: none[CounterExample[T]]()
+  )
 
 proc timeToUint32(): uint32 {.inline.} =
   when nimvm:
@@ -136,6 +173,78 @@ proc execAndShrink*[T](
     if res in {ptFail, ptPreCondFail}:
       rep.recordFailure(value.value, res)
       result.add rep
+
+proc recordPass*[T](
+     execution: var RunExecution[T], value: T) =
+  # QUESTION why is it necessary to store value of the succededing
+  # execution? There are (supposedly) hundreds of those, and we are not
+  # really interested in them for the most part.
+  #
+  # NOTE fast-check also builds 'execution tree' where values are used. For
+  # now I omitted this part, since I'm not sure what functionality it
+  # enables.
+  inc execution.numSuccess
+
+proc recordFail*[T](
+    execution: var RunExecution[T], value: T, id: int, message: string) =
+
+  if execution.counterExample.isNone():
+    execution.counterExample = some CounterExample[T](
+      value: value,
+      path: @[id]
+    )
+
+  else:
+    assert false # QUESTION I'm still not sure how often `fail` is supposed
+                 # to be called exactly. Once per execution run I supposed?
+                 # At least this would make sense - once property fails, we
+                 # record first failure and move on.
+
+
+proc newRunner*[T](params: AssertParams, arb: Arbitrary[T]): Runner[T] =
+  Runner[T](
+    runExecution: RunExecution[T](seed: params.seed),
+    sourceValues: arb
+  )
+
+proc next*[T](runner: var Runner[T]): RunnerYield[T] =
+  assert false
+
+iterator items*[T](runner: var Runner[T]): RunnerYield[T] =
+  var res = runner.next()
+  while not res.done:
+    yield res
+    res = runner.next()
+
+proc handleResult*[T](runner: var Runner[T], status: PtStatus) =
+  ## This procedure must be called after `next()` (or in every iteration of
+  ## the loop over `items`), otherwise recorded failure would not store
+  ## correct counterexample value.
+  case status:
+    of ptPass:
+      recordPass(runner.runExecution)
+
+
+proc execProperty*[T](
+    name: string,
+    arb: Arbitrary[T],
+    check: Predicate[T],
+    params: AssertParams = defAssertPropParams()
+  ): RunExecution[T] =
+
+
+  var property = newProperty(arb, check)
+  var runner = newRunner[T](params, arb)
+
+  for item in items(runner):
+    if params.runsBeforeSuccess.uint < runner.runExecution.runId.uint:
+      break
+
+    let runStatus = property.run(item.value.value)
+    runner.handleResult(runStatus)
+
+  return runner.runExecution
+
 
 proc execProperty*[A](
   ctx: var GlobalContext,
