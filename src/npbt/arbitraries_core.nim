@@ -7,9 +7,9 @@ import ./pbt_types
 
 proc arbTuple*[A](a1: Arbitrary[A]): Arbitrary[(A,)] =
   ## Arbitrary of single-value tuple
-  result = Arbitrary[(A,)](
-    mgenerate: proc(arb: Arbitrary[(A,)], rng: var Random): Shrinkable[(A,)] =
-                  shrinkableOf((a1.generate(rng).value,))
+  result = arbitrary(
+    proc(arb: Arbitrary[(A,)], rng: var Random): Shrinkable[(A,)] =
+      shrinkableOf((a1.generate(rng).value,))
   )
 
 proc arbTuple*[A,B](a1: Arbitrary[A], a2: Arbitrary[B]): Arbitrary[(A,B)] =
@@ -17,11 +17,9 @@ proc arbTuple*[A,B](a1: Arbitrary[A], a2: Arbitrary[B]): Arbitrary[(A,B)] =
   var
     o1 = a1
     o2 = a2
-  result = Arbitrary[(A,B)](
-    mgenerate: proc(a: Arbitrary[(A,B)], rng: var Random): Shrinkable[(A,B)] =
-                  shrinkableOf(
-                    (o1.generate(rng).value, o2.generate(rng).value)
-                  )
+  result = arbitrary(
+    proc(a: Arbitrary[(A,B)], rng: var Random): Shrinkable[(A,B)] =
+      shrinkableOf((o1.generate(rng).value, o2.generate(rng).value))
   )
 
 proc arbInt*(): Arbitrary[int] =

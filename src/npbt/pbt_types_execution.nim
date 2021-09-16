@@ -141,7 +141,7 @@ proc timeToUint32(): uint32 {.inline.} =
     cast[uint32](clamp(toUnix(getTime()), 0'i64, uint32.high.int64))
 
 
-proc defAssertPropParams(): AssertParams =
+proc defAssertPropParams*(): AssertParams =
   ## default params used for an `execProperty`
   let seed: uint32 = timeToUint32()
   result = AssertParams(
@@ -317,7 +317,7 @@ proc execProperty*[A, B](
   result = startReport[(A, B)](name, params.seed)
   var
     rng = params.random # XXX: need a var version
-    arb = tupleArb[A,B](arb1, arb2)
+    arb = arbTuple[A,B](arb1, arb2)
     p = newProperty(arb, pred)
 
   while(result.runId < params.runsBeforeSuccess):
@@ -345,7 +345,7 @@ proc execProperty*[A, B, C](
   result = startReport[(A, B, C)](name, params.seed)
   var
     rng = params.random # XXX: need a var version
-    arb = tupleArb[A,B,C](arb1, arb2, arb3)
+    arb = arbTuple[A,B,C](arb1, arb2, arb3)
     p = newProperty(arb, pred)
 
   while(result.runId < params.runsBeforeSuccess):
@@ -360,5 +360,6 @@ proc execProperty*[A, B, C](
 
   if result.hasFailure:
     ctx.reportFailure($result)
+
   else:
     ctx.reportSuccess($result)

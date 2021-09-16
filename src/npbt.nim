@@ -1,4 +1,4 @@
 import
-  ./npbt/propertytest
+  ./npbt/[propertytest]
 
 export propertytest

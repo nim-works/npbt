@@ -104,6 +104,7 @@ proc stopInnerSpec(ctx: var GlobalContext) =
   echo "" # empty line to break up the spec
 
 template specAux(globalCtx: var GlobalContext, body: untyped): untyped =
+  mixin startInnerSpec, defAssertPropParams, stopInnerSpec
   block:
     template forAll[A](
         name: string = "",
