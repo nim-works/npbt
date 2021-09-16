@@ -10,3 +10,6 @@ srcDir        = "src"
 # Dependencies
 
 requires "nim >= 1.4.8"
+
+task docgen, "Generate documentation":
+  exec "nim doc2 --project --warnings:off --outdir:htmldocs src/npbt.nim"
