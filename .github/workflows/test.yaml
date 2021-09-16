@@ -21,9 +21,3 @@ jobs:
       - run: "nim --version"
       - run: "nimble -y test"
       - run: "nimble -y install"
-      - run: "nimble docgen"
-      - uses: crazy-max/ghaction-github-pages@v1
-        with:
-          build_dir: .
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
