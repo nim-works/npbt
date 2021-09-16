@@ -29,11 +29,10 @@ type
     akLarge,     ## infeasilbe to generate all possible values (most cases)
     akExhaustive ## possible to generate all values (bool, enums, 8 bit ints)
 
-  ArbitraryImpl[T] = proc(
+  ArbitraryImpl*[T] = proc(
     a: Arbitrary[T], mrng: var Random): Shrinkable[T]
 
-  ShrinkImpl[T] = proc(value: Shrinkable[T]): seq[Shrinkable[T]]
-
+  ShrinkImpl*[T] = proc(value: Shrinkable[T]): seq[Shrinkable[T]]
 
 
   Arbitrary*[T] = object

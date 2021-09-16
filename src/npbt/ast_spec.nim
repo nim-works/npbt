@@ -46,39 +46,46 @@ type
   AstPatternRange[N, K] = tuple[arange: AstRange, alts: seq[AstPattern[N, K]]]
 
   AstPattern*[N, K] = object
+    thisKind*: K
     doc*: string
     check*: AstCheckProc[N, K]
     expected*: set[K]
     ranges*: seq[AstPatternRange[N, K]]
 
-  AstSpec[N, K] = object
+  AstSpec*[N, K] = object
+    filled: set[K]
     spec: array[K, Option[AstPattern[N, K]]]
 
 func astPattern*[N, K](
     expected: set[K],
+    this: K,
     check: AstCheckProc[N, K] = nil,
     doc: string = ""
   ): AstPattern[N, K] =
-  AstPattern[N, K](expected: expected, check: check)
+
+  AstPattern[N, K](expected: expected, check: check, thisKind: this)
 
 
 func astPattern*[N, K](
     expected: set[K],
+    this: K,
     alts: openarray[AstPatternRange[N, K]],
     check: AstCheckProc[N, K] = nil,
     doc: string = ""
   ): AstPattern[N, K] =
 
   AstPattern[N, K](
-    expected: expected, ranges: @alts, check: check, doc: doc)
+    expected: expected, ranges: @alts, check: check,
+    doc: doc, thisKind: this)
 
 func astPattern*[N, K](
     alts: openarray[AstPatternRange[N, K]],
+    this: K,
     check: AstCheckProc[N, K] = nil,
     doc: string = ""
   ): AstPattern[N, K] =
 
-  AstPattern[N, K](ranges: @alts, check: check, doc: doc)
+  AstPattern[N, K](ranges: @alts, check: check, doc: doc, thisKind: this)
 
 func astPattern*[N, K](doc: string = ""): AstPattern[N, K] =
   AstPattern[N, K](doc: doc)
@@ -87,9 +94,12 @@ func astSpec*[N, K](
     patterns: openarray[(K, AstPattern[N, K])]): AstSpec[N, K] =
   for (kind, pattern) in patterns:
     result.spec[kind] = some pattern
+    result.filled.incl kind
 
 func getPattern*[N, K](spec: AstSpec[N, K], kind: K): AstPattern[N, K] =
   spec.spec[kind].get()
+
+func getFilled*[N, K](spec: AstSpec[N, K]): set[K] = spec.filled
 
 func getNodeRanges*[N, K](spec: AstSpec[N, K]): array[K, Table[string, AstRange]] =
   for kind, pattern in spec.spec:
@@ -236,8 +246,8 @@ macro astSpec*(nodeType, kindType, body: untyped): untyped =
     nnkBracketExpr.newTree(ident(name), nodeType, kindType)
 
 
-  proc aux(node: NimNode): NimNode
-  proc rangeCurly(node: NimNode): NimNode
+  proc aux(node: NimNode, thisKind: NimNode): NimNode
+  proc rangeCurly(node: NimNode, thisKind: NimNode): NimNode
 
   proc toSet(node: NimNode): NimNode =
     case node.kind:
@@ -269,7 +279,7 @@ macro astSpec*(nodeType, kindType, body: untyped): untyped =
         expectKind(node, {nnkInfix, nnkCurly, nnkIdent})
 
 
-  proc altList(node: NimNode, comment: var string): NimNode =
+  proc altList(node: NimNode, comment: var string, thisKind: NimNode): NimNode =
     result = nnkBracket.newTree()
     var itemCount = 0
     for kind in node:
@@ -280,16 +290,16 @@ macro astSpec*(nodeType, kindType, body: untyped): untyped =
 
           else:
             inc itemCount
-            result.add newCall(call"astPattern", toSet(kind))
+            result.add newCall(call"astPattern", toSet(kind), thisKind)
 
         of nnkInfix:
           inc itemCount
-          result.add newCall(call"astPattern", toSet(kind))
+          result.add newCall(call"astPattern", toSet(kind), thisKind)
 
         of nnkCall:
           inc itemCount
           result.add newCall(
-            call"astPattern", toSet(kind[0]), rangeCurly(kind[1]))
+            call"astPattern", toSet(kind[0]), thisKind, rangeCurly(kind[1], thisKind))
 
         of nnkObjConstr:
           inc itemCount
@@ -297,7 +307,9 @@ macro astSpec*(nodeType, kindType, body: untyped): untyped =
           let nodeId = ident("node")
 
           result.add newCall(
-            call"astPattern", toSet(kind[0]),
+            call"astPattern",
+            toSet(kind[0]),
+            thisKind,
             quote do:
               proc node(`nodeId`: `nodeType`): Option[AstCheckFail[`kindType`]] =
                 discard
@@ -361,7 +373,7 @@ macro astSpec*(nodeType, kindType, body: untyped): untyped =
     else:
       assert false, "#[ TODO ]#"
 
-  proc rangeCurly(node: NimNode): NimNode =
+  proc rangeCurly(node: NimNode, thisKind: NimNode): NimNode =
     result = nnkTableConstr.newTree()
     for check in node:
       var comment: string = ""
@@ -371,7 +383,7 @@ macro astSpec*(nodeType, kindType, body: untyped): untyped =
 
           if (check.kind == nnkInfix and check.len == 4) or
                (check.kind == nnkPrefix and check.len == 3):
-            let list = altList(check[^1], comment)
+            let list = altList(check[^1], comment, thisKind)
             result.add newEcE(
               newCall(
                 ident"astRange",
@@ -391,10 +403,10 @@ macro astSpec*(nodeType, kindType, body: untyped): untyped =
               nnkPrefix.newTree(
                 ident"@",
                 nnkBracket.newTree(
-                  newCall(call"astPattern"))))
+                  newCall(call"astPattern", thisKind))))
 
         of nnkCall:
-          let list = altList(check[1], comment)
+          let list = altList(check[1], comment, thisKind)
           result.add newEcE(
             newCall(ident"astRange", check[0], newEqE("doc", newLit(comment))), list)
 
@@ -402,18 +414,20 @@ macro astSpec*(nodeType, kindType, body: untyped): untyped =
           expectKind(check, {nnkInfix, nnkCall})
 
 
-  proc aux(node: NimNode): NimNode =
+  proc aux(node: NimNode, thisKind: NimNode): NimNode =
     case node.kind:
       of nnkStmtList:
         if allIt(
           node, it.kind == nnkIdent or
           (it.kind == nnkCall and it[0].kind == nnkIdent)):
           var comment = ""
-          let list = altList(node, comment)
-          result = newCall(call"astPattern", list, newEqE("doc", newLit(comment)))
+          echo node.treeRepr()
+          let thisKind = node[0][0]
+          let list = altList(node, comment, thisKind)
+          result = newCall(call"astPattern", list, thisKind, newEqE("doc", newLit(comment)))
 
         else:
-          result = newCall(call"astPattern", rangeCurly(node))
+          result = newCall(call"astPattern", rangeCurly(node, thisKind), thisKind)
 
       else:
         assert false, $node.kind
@@ -423,9 +437,11 @@ macro astSpec*(nodeType, kindType, body: untyped): untyped =
   result = nnkTableConstr.newTree()
   for pattern in body:
     expectKind(pattern, {nnkCall})
-    result.add newEcE(pattern[0], aux(pattern[1]))
+    result.add newEcE(pattern[0], aux(pattern[1], pattern[0]))
 
   result = newCall(call"astSpec", result)
+
+
 func toSlice*(arange: AstRange, maxLen: int): Slice[int] =
   case arange.kind:
     of akPoint: arange.idx .. arange.idx
