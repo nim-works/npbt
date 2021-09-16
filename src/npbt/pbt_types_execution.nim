@@ -22,8 +22,8 @@ type
     runId*: uint32
     failureOn*: PossibleRunId
     seed*: uint32
+    name*: string
     counterExample*: Option[CounterExample[T]]
-    hasFailure*: bool
 
     # REVIEW fields below were added "because fast-check" does this, they
     # might not be actually needed later (see next comments).
@@ -86,7 +86,10 @@ type
     random*: Random
     runsBeforeSuccess*: range[1..high(int)]
     shrinkFirstFails*: range[1..high(int)]
+    path*: Option[seq[int]]
 
+func hasFailure*[T](ex: RunExecution[T]): bool =
+  ex.counterExample.isSome()
 
 proc startRun*[T](r: var AssertReport[T]) {.inline.} =
   r.runId.startRun()
@@ -121,6 +124,16 @@ proc `$`*[T](r: AssertReport[T]): string =
 
   result = fmt"{r.name} - {status}, totalRuns: {r.runId.int}"
 
+proc `$`*[T](r: RunExecution[T]): string =
+  if r.hasFailure:
+    let ce = r.counterExample.get()
+    # Use somewhat ugly formatting for path/seed to be able to copy-paste
+    # failed things directly, instead of having to reformat them.
+    fmt"{r.name} - failed on (path: {ce.path}, seed: {r.seed}) with value {ce.value}"
+
+  else:
+    fmt"{r.name} - success on {r.runId.int} runs"
+
 proc startReport*[T](
     name: string,
     seed: uint32
@@ -150,6 +163,12 @@ proc defAssertPropParams*(): AssertParams =
     runsBeforeSuccess: 10,
     shrinkFirstFails: 2
   )
+
+proc propParams*(seed: uint32, path: seq[int]): AssertParams =
+  result = defAssertPropParams()
+  result.seed = seed
+  result.random = newRandom(seed)
+  result.path = some path
 
 proc indent(ctx: GlobalContext): string =
   '\t'.repeat(max(ctx.specNames.len - 2, 0))
@@ -196,7 +215,6 @@ proc recordPass*[T](
 proc recordFail*[T](
     execution: var RunExecution[T], value: T, id: int) =
 
-  execution.hasFailure = true
   if execution.counterExample.isNone():
     execution.counterExample = some CounterExample[T](
       value: value,
@@ -210,9 +228,10 @@ proc recordFail*[T](
                  # record first failure and move on.
 
 
-proc newRunner*[T](params: AssertParams, arb: Arbitrary[T]): Runner[T] =
+proc newRunner*[T](
+    name: string, params: AssertParams, arb: Arbitrary[T]): Runner[T] =
   result = Runner[T](
-    runExecution: RunExecution[T](seed: params.seed),
+    runExecution: RunExecution[T](seed: params.seed, name: name),
     sourceValues: arb,
     mrng: newRandom()
   )
@@ -242,13 +261,13 @@ proc handleResult*[T](runner: var Runner[T], status: PtStatus) =
   ## correct counterexample value.
   case status:
     of ptPass:
+      recordPass(runner.runExecution, runner.currentShrinkable.value)
+
+    of ptFail, ptPreCondFail:
       recordFail(
         runner.runExecution,
         runner.currentShrinkable.value,
         runner.currentIdx)
-
-    of ptFail, ptPreCondFail:
-      recordPass(runner.runExecution, runner.currentShrinkable.value)
 
 
 proc execProperty*[T](
@@ -260,11 +279,17 @@ proc execProperty*[T](
 
 
   var property = newProperty(arb, check)
-  var runner = newRunner[T](params, arb)
+  var runner = newRunner[T](name, params, arb)
+  var pathSkip = if params.path.isSome(): params.path.get() else: @[]
+  var pathPos = 0
 
   for item in items(runner):
     if params.runsBeforeSuccess.uint < runner.runExecution.runId.uint:
       break
+
+    elif 0 < pathSkip.len and 1 < pathSkip[pathPos]:
+      dec pathSkip[pathPos]
+      continue
 
     let runStatus = property.run(item.value.value)
     runner.handleResult(runStatus)
