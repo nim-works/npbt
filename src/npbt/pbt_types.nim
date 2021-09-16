@@ -207,7 +207,7 @@ proc withBias[T](arb: var Arbitrary[T], f: Frequency): var Arbitrary[T] =
   ## XXX: implement biasing
   return arb
 
-proc toss(mrng: var Random) {.inline.} =
+proc toss*(mrng: var Random) {.inline.} =
   ## skips 42 numbers to introduce noise between generate calls
   for _ in 0..41:
     discard mrng.nextInt()

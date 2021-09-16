@@ -24,8 +24,6 @@ type
     seed*: uint32
     counterExample*: Option[CounterExample[T]]
     hasFailure*: bool
-    currentValue: T ## Last yielded value. Is stored in runner instance in
-                    ## order to specify correct value for `CounterExample`
 
     # REVIEW fields below were added "because fast-check" does this, they
     # might not be actually needed later (see next comments).
@@ -46,7 +44,17 @@ type
     # better to separate properties and source value generator.
     runExecution: RunExecution[T] ## Current state of run execution
     currentIdx: int ## Number of values checked by this runner
+    # QUESTION `.runExecution` has `runId` and `failureOn` - they are
+    # different from `currentIdx` or not?
     sourceValues: Arbitrary[T] ## Generator of the source values to check
+
+    currentShrinkable: Shrinkable[T] ## Last yielded value. Is stored in
+    ## runner instance in order to specify correct value for
+    ## `CounterExample`
+
+    mrng: Random ## Current state of the random to pass in the
+                 ## `sourceValues` when new value is required.
+
 
   RunnerYield[T] = object
     value: Shrinkable[T]
@@ -186,8 +194,9 @@ proc recordPass*[T](
   inc execution.numSuccess
 
 proc recordFail*[T](
-    execution: var RunExecution[T], value: T, id: int, message: string) =
+    execution: var RunExecution[T], value: T, id: int) =
 
+  execution.hasFailure = true
   if execution.counterExample.isNone():
     execution.counterExample = some CounterExample[T](
       value: value,
@@ -196,23 +205,34 @@ proc recordFail*[T](
 
   else:
     assert false # QUESTION I'm still not sure how often `fail` is supposed
-                 # to be called exactly. Once per execution run I supposed?
+                 # to be called exactly. Once per execution run I suppose?
                  # At least this would make sense - once property fails, we
                  # record first failure and move on.
 
 
 proc newRunner*[T](params: AssertParams, arb: Arbitrary[T]): Runner[T] =
-  Runner[T](
+  result = Runner[T](
     runExecution: RunExecution[T](seed: params.seed),
-    sourceValues: arb
+    sourceValues: arb,
+    mrng: newRandom()
   )
 
+  toss(result.mrng)
+
+proc newRunnerYield*[T](
+    shrinkable: Shrinkable[T], done: bool = false): RunnerYield[T] =
+
+  RunnerYield[T](done: done, value: shrinkable)
+
 proc next*[T](runner: var Runner[T]): RunnerYield[T] =
-  assert false
+  runner.currentShrinkable = runner.sourceValues.generate(runner.mrng)
+  discard runner.mrng.nextInt()
+  inc runner.currentIdx
+  return newRunnerYield(runner.currentShrinkable, false)
 
 iterator items*[T](runner: var Runner[T]): RunnerYield[T] =
   var res = runner.next()
-  while not res.done:
+  while not (res.done or runner.runExecution.hasFailure):
     yield res
     res = runner.next()
 
@@ -222,7 +242,13 @@ proc handleResult*[T](runner: var Runner[T], status: PtStatus) =
   ## correct counterexample value.
   case status:
     of ptPass:
-      recordPass(runner.runExecution)
+      recordFail(
+        runner.runExecution,
+        runner.currentShrinkable.value,
+        runner.currentIdx)
+
+    of ptFail, ptPreCondFail:
+      recordPass(runner.runExecution, runner.currentShrinkable.value)
 
 
 proc execProperty*[T](
@@ -242,6 +268,8 @@ proc execProperty*[T](
 
     let runStatus = property.run(item.value.value)
     runner.handleResult(runStatus)
+    # QUESTION where to call and store shrinked values after failure has
+    # been recorded?
 
   return runner.runExecution
 
