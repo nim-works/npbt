@@ -1,15 +1,9 @@
 # these modules are used extensively
 import std/macros
-import std/mersenne
 import std/options # need this for counter examples
 
 # these modules have limited use, so be selective
-from std/math import floor, log10
 from std/strformat import fmt
-from std/strutils import join, repeat
-from std/sugar import `=>` # XXX: maybe a bust because inference can't keep up
-from std/sequtils import toSeq, apply
-from std/times import toUnix, getTime
 
 # XXX: Once this is mature enough (repeatability, shrinking, and API) move out
 #      of experimental.
