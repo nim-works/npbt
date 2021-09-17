@@ -6,16 +6,20 @@ export ast_spec
 
 type
   AstBuilder[N, K] = object
-    newTree*: proc(kind: K, subnodes: seq[N]): N
-    newStringLeaf*: proc(kind: K, value: string): N
-    newIntLeaf*: proc(kind: K, value: BiggestInt): N
-    newFloatLeaf*: proc(kind: K, value: float): N
+    ## Collection of callbacks to construct different classes of the AST
+    newTree*: proc(kind: K, subnodes: seq[N]): N ## Tree with subnodes
+    newStringLeaf*: proc(kind: K, value: string): N ## String leaf
+                                                    ## (literal, ident
+                                                    ## etc.)
+    newIntLeaf*: proc(kind: K, value: BiggestInt): N ## Integer leaf (literal)
+    newFloatLeaf*: proc(kind: K, value: float): N ## Float leaf (literal)
     # TODO embed string builders for arbitrary node values (integer,
     # string, identifiers etc). This would require mapping out different
     # node categories - for exmple string must be split into string
     # literals and identifiers.
 
   AstNodeClass = enum
+    ## Classes of the node kinds
     tncIntLeaf
     tncStringLeaf
     tncFloatLeaf
@@ -27,6 +31,9 @@ proc newTreeBuilder*[N, K](
     newIntLeaf: proc(kind: K, value: BiggestInt): N = nil,
     newFloatLeaf: proc(kind: K, value: float): N = nil
   ): AstBuilder[N, K] =
+  ## Construct new ast tree builder using provided callbacks. Note that all
+  ## of the leaf ones are defaulted to `nil`, so if you plan for your tree
+  ## to include int/string/float nodes those must also be specified.
 
   AstBuilder[N, K](
     newTree: newTree,

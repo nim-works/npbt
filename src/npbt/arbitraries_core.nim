@@ -23,6 +23,8 @@ proc arbTuple*[A,B](a1: Arbitrary[A], a2: Arbitrary[B]): Arbitrary[(A,B)] =
   )
 
 proc arbInt*(): Arbitrary[int] =
+  ## Create int arbitrary generator with values with full range of integer
+  ## values
   arbitrary() do (arb: Arbitrary[int], rng: var Random) -> Shrinkable[int]:
     shrinkableOf(rng.nextInt())
 
@@ -107,6 +109,7 @@ proc arbstringAscii*(min: uint32 = 0, max: uint32 = 1000): Arbitrary[string] {.i
   arbstring(min, max, arbcharAscii())
 
 proc arbEnum*[T: enum](values: set[T] = {low(T) .. high(T)}): Arbitrary[T] =
+  ## Create arbitrary enum generator using set of allowed values
   # XXX: use a uint32 arb to get a value between the current pos and end of
   # seq, then swap access over that
 
