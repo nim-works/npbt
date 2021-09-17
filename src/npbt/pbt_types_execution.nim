@@ -146,25 +146,19 @@ proc startReport*[T](
     counterExample: none[CounterExample[T]]()
   )
 
-proc timeToUint32(): uint32 {.inline.} =
-  when nimvm:
-    # XXX: can't access time in the VM, figure out another way
-    0
-  else:
-    cast[uint32](clamp(toUnix(getTime()), 0'i64, uint32.high.int64))
-
-
 proc defAssertPropParams*(): AssertParams =
   ## default params used for an `execProperty`
-  let seed: uint32 = timeToUint32()
+  let rand = newRandom()
   result = AssertParams(
-    seed: seed,
-    random: newRandom(seed),
+    seed: rand.seed,
+    random: rand,
     runsBeforeSuccess: 10,
     shrinkFirstFails: 2
   )
 
 proc propParams*(seed: uint32, path: seq[int]): AssertParams =
+  ## Construct new assert parameters based on default ones, overriding seed
+  ## and path with specified ones.
   result = defAssertPropParams()
   result.seed = seed
   result.random = newRandom(seed)

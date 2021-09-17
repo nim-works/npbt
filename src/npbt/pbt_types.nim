@@ -1,6 +1,7 @@
 import std/[options, mersenne]
 
 from std/math import floor, log10
+from std/times import toUnix, getTime
 
 type
   PTStatus* = enum
@@ -109,6 +110,11 @@ proc generate*[T](a: Arbitrary[T], mrng: var Random): Shrinkable[T] =
   ## calls the internal implementation
   a.mgenerate(a, mrng)
 
+proc getValue*[T](a: Arbitrary[T], mrng: var Random): T =
+  ## Calls internal implementation and returns it's value directly
+  a.mgenerate(a, mrng).value
+
+
 proc arbitrary*[T](
     mgenerate: ArbitraryImpl[T],
     shrink: ShrinkImpl[T] = nil,
@@ -164,7 +170,23 @@ proc sample*[T](a: Arbitrary[T], n: uint, mrng: var Random): seq[Shrinkable[T]] 
 #      reproduce a failure. Additionally, different psuedo random number
 #      generation schemes are required because they have various distribution
 #      and performance characteristics which quickly become relevant at scale.
-proc newRandom*(seed: uint32 = 0): Random =
+
+proc timeToUint32(): uint32 {.inline.} =
+  when nimvm:
+    result = 0
+
+  else:
+    result = cast[uint32](clamp(toUnix(getTime()), 0'i64, uint32.high.int64))
+
+
+func seed*(r: Random): uint32 = r.seed
+proc newRandom*(): Random =
+  ## Construct new random instance with current time as a seed
+  let seed = timeToUint32()
+  Random(seed: seed, rng: newMersenneTwister(seed))
+
+proc newRandom*(seed: uint32): Random =
+  ## Construct new random instance with given seed
   Random(seed: seed, rng: newMersenneTwister(seed))
 
 proc nextUint32*(r: var Random): uint32 =
