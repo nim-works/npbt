@@ -10,7 +10,7 @@ import ./pbt_types
 
 proc getFirst*[T](
     a: Arbitrary[T],
-    getN: int = 16,
+    getN: int = 8,
     random: Random = newRandom()): seq[T] =
 
   var rand = random
@@ -216,9 +216,14 @@ proc arbRune*(): Arbitrary[Rune] =
     shrinkableOf Rune(arbValues.generate(r).value)
 
 proc arbStringNimIdent*(
-    idLen: int = 12, useUnicode: bool = false): Arbitrary[string] =
+    idLen: int = 12,
+    repeatNormalized: bool = false,
+    useUnicode: bool = false
+  ): Arbitrary[string] =
   ## Generate arbitrary nim identifiers, including upper/lower cased ones,
   ## with underscore separation etc.
+  ## - @arg{repeatNormalized} :: Allow generator to produce identifiers with
+  ##   identical normalied values (nim identifier normalization)
   ##
   ## - TODO :: implement unicode support
 
@@ -226,20 +231,39 @@ proc arbStringNimIdent*(
   let leadChar = arbChar(IdentStartChars)
   let bodyChar = arbChar(IdentChars)
   let bodyAlnum = arbChar({'a' .. 'z', 'A' .. 'Z', '0' .. '9'})
+  var normalizedYield: Table[string, bool]
+
+  proc nimNorm(s: string): string =
+    result.add s[0]
+    for ch in s[1..^1]:
+
+      case ch:
+        of 'a' .. 'z' : result.add ch
+        of '_' : discard
+        of 'A' .. 'Z': result.add char(ch.uint8 - ('A'.uint8 - 'a'.uint8))
+        else: result.add ch
 
   arbitrary() do (
     a: Arbitrary[string], r: var Random) -> Shrinkable[string]:
+    var foundNext = false
     var res: string
-    while res.len < idLen:
-      if res.len == 0:
-        res.add leadChar.generate(r).value
-
-      else:
-        if res[^1] in {'_'}:
-          res.add bodyAlnum.generate(r).value
+    while not foundNext:
+      res = ""
+      while res.len < idLen:
+        if res.len == 0:
+          res.add leadChar.getValue(r)
 
         else:
-          res.add bodyChar.generate(r).value
+          if res[^1] in {'_'}:
+            res.add bodyAlnum.getValue(r)
+
+          else:
+            res.add bodyChar.getValue(r)
+
+      foundNext = repeatNormalized or res.nimNorm() notin normalizedYield
+      if not repeatNormalized:
+        normalizedYield[res] = true
+
 
     return asShrinkable(res)
 
