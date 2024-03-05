@@ -110,14 +110,14 @@ template specAux(globalCtx: var GlobalContext, body: untyped): untyped =
         name: string = "",
         arb1: Arbitrary[A],
         pred: Predicate[A] # XXX: move the predicate decl inline
-        ) {.hint[XDeclaredButNotUsed]: off.} =
+        ) =
       discard execProperty(globalCtx, name, arb1, pred, defAssertPropParams())
 
     template forAll[A,B](
         name: string = "",
         arb1: Arbitrary[A], arb2: Arbitrary[B],
         pred: Predicate[(A, B)] # XXX: move the predicate decl inline
-        ) {.hint[XDeclaredButNotUsed]: off.} =
+        ) =
       discard execProperty(globalCtx, name, arb1, arb2, pred,
                            defAssertPropParams())
 
@@ -125,11 +125,11 @@ template specAux(globalCtx: var GlobalContext, body: untyped): untyped =
         name: string = "",
         arb1: Arbitrary[A], arb2: Arbitrary[B], arb3: Arbitrary[C],
         pred: Predicate[(A, B, C)] # XXX: move the predicate decl inline
-        ) {.hint[XDeclaredButNotUsed]: off.} =
+        ) =
       discard execProperty(globalCtx, name, arb1, arb2, arb3, pred,
                            defAssertPropParams())
 
-    template ctSpec(name: string = "", b: untyped): untyped {.hint[XDeclaredButNotUsed]: off.} =
+    template ctSpec(name: string = "", b: untyped): untyped =
       {.error: "ctSpec can only be used once at the top level".}
 
     template spec(name: string = "", b: untyped): untyped =

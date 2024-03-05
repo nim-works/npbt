@@ -4,6 +4,7 @@ from std/strformat import fmt
 from std/times import toUnix, getTime
 from std/strutils import repeat
 
+import ./arbitraries_core  # apparently needed for arbTuple
 import ./pbt_types
 
 type
