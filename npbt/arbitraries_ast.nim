@@ -89,7 +89,7 @@ proc arbAst*[N, K](
 
 
 
-  proc generate(arg: Arbitrary[N], rng: var Random): Shrinkable[N] =
+  proc arbImpl(arg: Arbitrary[N], rng: var Random): Shrinkable[N] =
     return spec.getPattern(arbKind.generate(rng).value).aux(0).shrinkableOf()
 
-  return arbitrary[N](generate)
+  return arbitrary[N](arbImpl)
