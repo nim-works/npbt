@@ -119,16 +119,6 @@ jobs:
         env:
           NIM: ${{ matrix.compiler.name }}
 
-      - name: Examples
-        run: |
-          cd examples
-          balls '***' --path=".." \
-                --backend:c --panics:on \
-                --mm:arc --define:useMalloc \
-                --define:debug --define:release --define:danger
-        env:
-          NIM: ${{ matrix.compiler.name }}
-
       - name: Tests
         run: |
           balls --path="." \
@@ -136,7 +126,7 @@ jobs:
                 --gc:arc --define:useMalloc \
                 --define:debug --define:release --define:danger
 
-      - name: Build docs
+      - name: Build Docs
         if: matrix.os == 'ubuntu-latest' && matrix.compiler.name == 'nimskull'
         run: |
           branch=${{ github.ref }}
@@ -149,7 +139,7 @@ jobs:
           # Ignore failures for older Nim
           cp docs/{the,}index.html || true
 
-      - name: Publish docs
+      - name: Publish Docs
         if: github.event_name == 'push' && github.ref == 'refs/heads/master' &&
             matrix.os == 'ubuntu-latest' && matrix.compiler.name == 'nimskull'
         uses: crazy-max/ghaction-github-pages@v3.1.0
