@@ -1,3 +1,11 @@
-htmldocs/*
-tests/t*
-!tests/t*.nim
+nim.cfg
+bin
+deps
+.tool-versions
+examples/data/output.txt
+backlog.txt
+profile.coz
+nimblemeta.json
+perf.data
+perf.data.old
+heaptrack.*.zst
