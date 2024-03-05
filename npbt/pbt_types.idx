@@ -1,0 +1,50 @@
+ptPreCondFail	npbt/pbt_types.html#ptPreCondFail	PTStatus.ptPreCondFail	
+ptFail	npbt/pbt_types.html#ptFail	PTStatus.ptFail	
+ptPass	npbt/pbt_types.html#ptPass	PTStatus.ptPass	
+PTStatus	npbt/pbt_types.html#PTStatus	pbt_types: PTStatus	
+RunId	npbt/pbt_types.html#RunId	pbt_types: RunId	
+PossibleRunId	npbt/pbt_types.html#PossibleRunId	pbt_types: PossibleRunId	
+Predicate	npbt/pbt_types.html#Predicate	pbt_types: Predicate	
+Random	npbt/pbt_types.html#Random	pbt_types: Random	
+akLarge	npbt/pbt_types.html#akLarge	ArbitraryKind.akLarge	
+akExhaustive	npbt/pbt_types.html#akExhaustive	ArbitraryKind.akExhaustive	
+ArbitraryKind	npbt/pbt_types.html#ArbitraryKind	pbt_types: ArbitraryKind	
+ArbitraryImpl	npbt/pbt_types.html#ArbitraryImpl	pbt_types: ArbitraryImpl	
+ShrinkImpl	npbt/pbt_types.html#ShrinkImpl	pbt_types: ShrinkImpl	
+Arbitrary	npbt/pbt_types.html#Arbitrary	pbt_types: Arbitrary	
+Shrinkable	npbt/pbt_types.html#Shrinkable	pbt_types: Shrinkable	
+Property	npbt/pbt_types.html#Property	pbt_types: Property	
+Frequency	npbt/pbt_types.html#Frequency	pbt_types: Frequency	
+noRunId	npbt/pbt_types.html#noRunId	pbt_types: noRunId	
+isUnspecified	npbt/pbt_types.html#isUnspecified,PossibleRunId	pbt_types: isUnspecified(r: PossibleRunId): bool	
+newRun	npbt/pbt_types.html#newRun	pbt_types: newRun(): RunId	
+startRun	npbt/pbt_types.html#startRun,RunId	pbt_types: startRun(r: var RunId): RunId	
+startRun	npbt/pbt_types.html#startRun,PossibleRunId	pbt_types: startRun(r: var PossibleRunId)	
+runIdToFrequency	npbt/pbt_types.html#runIdToFrequency,RunId	pbt_types: runIdToFrequency(r: RunId): int	
+map	npbt/pbt_types.html#map,Shrinkable[T],proc(T)	pbt_types: map[T, U](s: Shrinkable[T]; mapper: proc (t: T): U): Shrinkable[U]	
+filter	npbt/pbt_types.html#filter,Shrinkable[T],proc(T)	pbt_types: filter[T](s: Shrinkable[T]; predicate: proc (t: T): bool): Shrinkable[T]	
+shrinkableOf	npbt/pbt_types.html#shrinkableOf,T	pbt_types: shrinkableOf[T](v: T): Shrinkable[T]	
+shrinkableOf	npbt/pbt_types.html#shrinkableOf,T_2	pbt_types: shrinkableOf[T](v: var T): var Shrinkable[T]	
+asShrinkable	npbt/pbt_types.html#asShrinkable,sinkT	pbt_types: asShrinkable[T](v: sink T): Shrinkable[T]	
+generate	npbt/pbt_types.html#generate,Arbitrary[T],Random	pbt_types: generate[T](a: Arbitrary[T]; mrng: var Random): Shrinkable[T]	
+getValue	npbt/pbt_types.html#getValue,Arbitrary[T],Random	pbt_types: getValue[T](a: Arbitrary[T]; mrng: var Random): T	
+arbitrary	npbt/pbt_types.html#arbitrary,ArbitraryImpl[T],ShrinkImpl[T],ArbitraryKind	pbt_types: arbitrary[T](mgenerate: ArbitraryImpl[T]; shrink: ShrinkImpl[T] = nil;\n             kind: ArbitraryKind = akLarge): Arbitrary[T]	
+map	npbt/pbt_types.html#map,Arbitrary[T],proc(T)	pbt_types: map[T, U](o: Arbitrary[T]; mapper: proc (t: T): U): Arbitrary[U]	
+filter	npbt/pbt_types.html#filter,Arbitrary[T],proc(T)	pbt_types: filter[T](o: Arbitrary[T]; predicate: proc (t: T): bool): Arbitrary[T]	
+flatMap	npbt/pbt_types.html#flatMap,Arbitrary[T],proc(T)	pbt_types: flatMap[T, U](s: Arbitrary[T]; fmapper: proc (t: T): Arbitrary[U]): Arbitrary[U]	
+take	npbt/pbt_types.html#take,Arbitrary[T],uint,Random	pbt_types: take[T](a: Arbitrary[T]; n: uint; mrng: var Random): Shrinkable[seq[T]]	
+sample	npbt/pbt_types.html#sample,Arbitrary[T],uint,Random	pbt_types: sample[T](a: Arbitrary[T]; n: uint; mrng: var Random): seq[Shrinkable[T]]	
+seed	npbt/pbt_types.html#seed,Random	pbt_types: seed(r: Random): uint32	
+newRandom	npbt/pbt_types.html#newRandom	pbt_types: newRandom(): Random	
+newRandom	npbt/pbt_types.html#newRandom,uint32	pbt_types: newRandom(seed: uint32): Random	
+nextUint32	npbt/pbt_types.html#nextUint32,Random	pbt_types: nextUint32(r: var Random): uint32	
+nextInt	npbt/pbt_types.html#nextInt,Random	pbt_types: nextInt(r: var Random): int	
+nextUint32	npbt/pbt_types.html#nextUint32,Random,uint32,uint32	pbt_types: nextUint32(r: var Random; min, max: uint32): uint32	
+nextInt	npbt/pbt_types.html#nextInt,Random,int,int	pbt_types: nextInt(r: var Random; min, max: int): int	
+asStatus	npbt/pbt_types.html#asStatus,bool	pbt_types: asStatus(b: bool): PTStatus	
+newProperty	npbt/pbt_types.html#newProperty,Arbitrary[T],Predicate	pbt_types: newProperty[T](arb: Arbitrary[T]; p: Predicate): Property[T]	
+toss	npbt/pbt_types.html#toss,Random	pbt_types: toss(mrng: var Random)	
+generate	npbt/pbt_types.html#generate,Property[T],Random,RunId	pbt_types: generate[T](p: var Property[T]; mrng: Random; runId: RunId): Shrinkable[T]	
+generate	npbt/pbt_types.html#generate,Property[T],Random	pbt_types: generate[T](p: Property[T]; mrng: Random): Shrinkable[T]	
+shrink	npbt/pbt_types.html#shrink,Property[T],Shrinkable[T]	pbt_types: shrink[T](p: Property[T]; value: Shrinkable[T]): seq[Shrinkable[T]]	
+run	npbt/pbt_types.html#run,Property[T],T	pbt_types: run[T](p: Property[T]; v: T): PTStatus	

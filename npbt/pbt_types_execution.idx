@@ -1,0 +1,29 @@
+RunExecution	npbt/pbt_types_execution.html#RunExecution	pbt_types_execution: RunExecution	
+GlobalContext	npbt/pbt_types_execution.html#GlobalContext	pbt_types_execution: GlobalContext	
+AssertReport	npbt/pbt_types_execution.html#AssertReport	pbt_types_execution: AssertReport	
+AssertParams	npbt/pbt_types_execution.html#AssertParams	pbt_types_execution: AssertParams	
+hasFailure	npbt/pbt_types_execution.html#hasFailure,RunExecution[T]	pbt_types_execution: hasFailure[T](ex: RunExecution[T]): bool	
+startRun	npbt/pbt_types_execution.html#startRun,AssertReport[T]	pbt_types_execution: startRun[T](r: var AssertReport[T])	
+recordFailure	npbt/pbt_types_execution.html#recordFailure,AssertReport[T],T,PTStatus	pbt_types_execution: recordFailure[T](r: var AssertReport[T]; example: T; ft: PTStatus)	
+hasFailure	npbt/pbt_types_execution.html#hasFailure,AssertReport	pbt_types_execution: hasFailure(r: AssertReport): bool	
+isSuccessful	npbt/pbt_types_execution.html#isSuccessful,AssertReport	pbt_types_execution: isSuccessful(r: AssertReport): bool	
+`$`	npbt/pbt_types_execution.html#$,AssertReport[T]	pbt_types_execution: `$`[T](r: AssertReport[T]): string	
+`$`	npbt/pbt_types_execution.html#$,RunExecution[T]	pbt_types_execution: `$`[T](r: RunExecution[T]): string	
+startReport	npbt/pbt_types_execution.html#startReport,string,uint32	pbt_types_execution: startReport[T](name: string; seed: uint32): AssertReport[T]	
+defAssertPropParams	npbt/pbt_types_execution.html#defAssertPropParams	pbt_types_execution: defAssertPropParams(): AssertParams	
+propParams	npbt/pbt_types_execution.html#propParams,uint32,seq[int]	pbt_types_execution: propParams(seed: uint32; path: seq[int]): AssertParams	
+ctxEcho	npbt/pbt_types_execution.html#ctxEcho,GlobalContext,string	pbt_types_execution: ctxEcho(ctx: GlobalContext; msg: string)	
+reportSuccess	npbt/pbt_types_execution.html#reportSuccess,GlobalContext,string	pbt_types_execution: reportSuccess(ctx: GlobalContext; msg: string)	
+reportFailure	npbt/pbt_types_execution.html#reportFailure,GlobalContext,string	pbt_types_execution: reportFailure(ctx: var GlobalContext; msg: string)	
+execAndShrink	npbt/pbt_types_execution.html#execAndShrink,GlobalContext,Shrinkable[T],Property[T],AssertParams	pbt_types_execution: execAndShrink[T](ctx: var GlobalContext; value: Shrinkable[T];\n                 prop: Property[T]; params: AssertParams = defAssertPropParams()): seq[\n    AssertReport[T]]	
+recordPass	npbt/pbt_types_execution.html#recordPass,RunExecution[T],T	pbt_types_execution: recordPass[T](execution: var RunExecution[T]; value: T)	
+recordFail	npbt/pbt_types_execution.html#recordFail,RunExecution[T],T,int	pbt_types_execution: recordFail[T](execution: var RunExecution[T]; value: T; id: int)	
+newRunner	npbt/pbt_types_execution.html#newRunner,string,AssertParams,Arbitrary[T]	pbt_types_execution: newRunner[T](name: string; params: AssertParams; arb: Arbitrary[T]): Runner[T]	
+newRunnerYield	npbt/pbt_types_execution.html#newRunnerYield,Shrinkable[T],bool	pbt_types_execution: newRunnerYield[T](shrinkable: Shrinkable[T]; done: bool = false): RunnerYield[T]	
+next	npbt/pbt_types_execution.html#next,Runner[T]	pbt_types_execution: next[T](runner: var Runner[T]): RunnerYield[T]	
+items	npbt/pbt_types_execution.html#items.i,Runner[T]	pbt_types_execution: items[T](runner: var Runner[T]): RunnerYield[T]	
+handleResult	npbt/pbt_types_execution.html#handleResult,Runner[T],PTStatus	pbt_types_execution: handleResult[T](runner: var Runner[T]; status: PTStatus)	
+execProperty	npbt/pbt_types_execution.html#execProperty,string,Arbitrary[T],Predicate[T],AssertParams	pbt_types_execution: execProperty[T](name: string; arb: Arbitrary[T]; check: Predicate[T];\n                params: AssertParams = defAssertPropParams()): RunExecution[T]	
+execProperty	npbt/pbt_types_execution.html#execProperty,GlobalContext,string,Arbitrary[A],Predicate[A],AssertParams	pbt_types_execution: execProperty[A](ctx: var GlobalContext; name: string; arb: Arbitrary[A];\n                pred: Predicate[A]; params: AssertParams = defAssertPropParams()): seq[\n    AssertReport[A]]	
+execProperty	npbt/pbt_types_execution.html#execProperty,GlobalContext,string,Arbitrary[A],Arbitrary[B],Predicate[],AssertParams	pbt_types_execution: execProperty[A, B](ctx: var GlobalContext; name: string; arb1: Arbitrary[A];\n                   arb2: Arbitrary[B]; pred: Predicate[(A, B)];\n                   params: AssertParams = defAssertPropParams()): AssertReport[\n    (A, B)]	
+execProperty	npbt/pbt_types_execution.html#execProperty,GlobalContext,string,Arbitrary[A],Arbitrary[B],Arbitrary[C],Predicate[],AssertParams	pbt_types_execution: execProperty[A, B, C](ctx: var GlobalContext; name: string; arb1: Arbitrary[A];\n                      arb2: Arbitrary[B]; arb3: Arbitrary[C];\n                      pred: Predicate[(A, B, C)];\n                      params: AssertParams = defAssertPropParams()): AssertReport[\n    (A, B, C)]	

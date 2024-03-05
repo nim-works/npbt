@@ -1,0 +1,5 @@
+spec	npbt/propertytest.html#spec.t,string,untyped	propertytest: spec(n: string = &quot;&quot;; body: untyped): untyped	
+ctSpec	npbt/propertytest.html#ctSpec.m,string,untyped	propertytest: ctSpec(n: string = &quot;&quot;; body: untyped): untyped	
+Current Development:	npbt/propertytest.html#current-developmentcolon	 Current Development:	
+API Evolution:	npbt/propertytest.html#current-developmentcolon-api-evolutioncolon	  API Evolution:	
+Core Evolution:	npbt/propertytest.html#current-developmentcolon-core-evolutioncolon	  Core Evolution:	
