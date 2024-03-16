@@ -2,7 +2,7 @@ import std/[strutils, tables]
 
 from std/sequtils import toSeq
 from std/sugar import `=>`
-from std/macros import NimNodeKind, newNimNode
+from std/macros import NimNodeKind, newNimNode, nnkRequireInitKinds
 from std/unicode import Rune, `$`
 from std/strformat import `&`
 
@@ -296,5 +296,8 @@ proc arbEnum*[T: enum](values: set[T] = {low(T) .. high(T)}): Arbitrary[T] =
   # )
 
 proc arbNimNode*(): Arbitrary[NimNode] =
-  # XXX: what is even going on?
-  result = arbEnum[NimNodeKind]().map(k => newNimNode(k))
+  ## create an arbitrary NimNode
+  const
+    arbAbleNodes =
+      {NimNodeKind.low .. NimNodeKind.high} - nnkRequireInitKinds
+  result = arbEnum[NimNodeKind](arbAbleNodes).map(k => newNimNode(k))
