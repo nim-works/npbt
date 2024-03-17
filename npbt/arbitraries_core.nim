@@ -1,10 +1,10 @@
-import std/[strutils, tables]
-
-from std/sequtils import toSeq
-from std/sugar import `=>`
-from std/macros import NimNodeKind, newNimNode, nnkRequireInitKinds
-from std/unicode import Rune, `$`
-from std/strformat import `&`
+import std/macros
+import std/sequtils
+import std/strformat
+import std/strutils
+import std/sugar
+import std/tables
+import std/unicode
 
 import ./pbt_types
 
