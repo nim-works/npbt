@@ -297,7 +297,10 @@ proc arbEnum*[T: enum](values: set[T] = {low(T) .. high(T)}): Arbitrary[T] =
 
 proc arbNimNode*(): Arbitrary[NimNode] =
   ## create an arbitrary NimNode
-  const
-    arbAbleNodes =
-      {NimNodeKind.low .. NimNodeKind.high} - nnkRequireInitKinds
+  when defined(isNimSkull):
+    const
+      arbAbleNodes =
+        {NimNodeKind.low .. NimNodeKind.high} - nnkRequireInitKinds
+  else:
+    const arbAbleNodes = {NimNodeKind.low .. NimNodeKind.high}
   result = arbEnum[NimNodeKind](arbAbleNodes).map(k => newNimNode(k))
