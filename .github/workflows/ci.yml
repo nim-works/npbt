@@ -64,8 +64,8 @@ jobs:
           #  version: version-1-6
           #- name: nim
           #version: version-1-4
-          - name: nimskull
-            version: "*"
+#          - name: nimskull
+#            version: "*"
 
     name: '${{ matrix.os }} (${{ matrix.compiler.name }} ${{ matrix.compiler.version }})'
     runs-on: ${{ matrix.os }}
